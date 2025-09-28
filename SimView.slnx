@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="SimView/SimView.vcxproj" />
+  <Project Path="Test/Test.vcxproj" />
+  <Project Path="TestProject/TestProject.vcxproj" />
+</Solution>
