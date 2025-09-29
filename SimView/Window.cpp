@@ -14,25 +14,27 @@ namespace SimView
     }
 
     const char* vertexShaderSource =
-        "#version 330 core\n"
+        "#version 460 core\n"
         "in vec2 position;\n"
-        "uniform vec2 windowSize;"
+        "uniform mat3 transform;\n"
         "void main()\n"
         "{\n"
-        "   gl_Position = vec4(2 * position.x / windowSize.x - 1.0, 2 * position.y / windowSize.y - 1.0, 0.0, 1.0);\n"
+        "   gl_Position = vec4(transform * vec3(position, 1.0f),1.0);\n"
         "}\0";
 
     const char* fragmentShaderSource =
-        "#version 330 core\n"
-        "uniform vec4 OutputColor;"
+        "#version 460 core\n"
+        "uniform vec4 renderColor;\n"
         "out vec4 FragColor;\n"
         "void main()\n"
         "{\n"
-        "   FragColor = OutputColor;\n"
+        "   FragColor = renderColor;\n"
         "}\0";
 
     Window::Window(int width, int height, std::string title)
     {
+        int err;
+
         windowPtr = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
         glfwSetWindowCloseCallback(windowPtr, close_callback);
         glfwSetFramebufferSizeCallback(windowPtr, framebuffer_size_callback);
@@ -61,10 +63,26 @@ namespace SimView
         vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
         glCompileShader(vertexShader);
+        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            char infoLog[512];
+            glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+            throw std::runtime_error("Renderer Error: Failed to compile vertex shader\n" + std::string(infoLog) + "\n");
+        }
+        err = glGetError();
 
         fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
         glCompileShader(fragmentShader);
+        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            char infoLog[512];
+            glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+            throw std::runtime_error("Renderer Error: Failed to compile fragment shader\n" + std::string(infoLog) + "\n");
+        }
+        err = glGetError();
 
         shaderProgram = glCreateProgram();
         glAttachShader(shaderProgram, vertexShader);
@@ -73,14 +91,20 @@ namespace SimView
         glGetShaderiv(shaderProgram, GL_LINK_STATUS, &success);
         if (!success)
         {
-            throw std::runtime_error("Renderer Error: Failed to initialize shader program\n");
+            char infoLog[512];
+            glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);
+            throw std::runtime_error("Renderer Error: Failed to compile shader program\n" + std::string(infoLog) + "\n");
         }
+        err = glGetError();
 
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
 
-        renderColorLoc = glGetUniformLocation(shaderProgram, "OutputColor");
-        windowSizeLoc = glGetUniformLocation(shaderProgram, "windowSize");
+        glUseProgram(shaderProgram);
+
+        renderColorLoc = glGetUniformLocation(shaderProgram, "renderColor");
+        transMatLoc = glGetUniformLocation(shaderProgram, "transform");
+        vertexPosLoc = glGetAttribLocation(shaderProgram, "position");
 
         glGenVertexArrays(1, &VAO);
         glBindVertexArray(VAO);
@@ -115,7 +139,8 @@ namespace SimView
         frameStartTime = glfwGetTime();
         glfwGetFramebufferSize(windowPtr, &width, &height);
         glViewport(0, 0, width, height);
-        glUniform2f(windowSizeLoc, width, height);
+        viewMatrix = GetViewMatrix();
+        glUseProgram(shaderProgram);
     }
 
     void Window::EndFrame()
@@ -144,6 +169,38 @@ namespace SimView
         glLineWidth(width);
     }
 
+    void Window::SetPointSize(int size)
+    {
+        glPointSize(size);
+    }
+
+    void Window::SetTransformMatrix(glm::mat3x3& matrix)
+    {
+        glUniformMatrix3fv(transMatLoc, 1, GL_FALSE, glm::value_ptr(matrix));
+    }
+
+    glm::mat3x3 Window::GetViewMatrix()
+    {
+        glm::mat3x3 matrix;
+        matrix[0][0] = 2.f / width;
+        matrix[1][0] = 0;
+        matrix[2][0] = -1;
+        matrix[0][1] = 0;
+        matrix[1][1] = 2.f / height;
+        matrix[2][1] = -1;
+        matrix[0][2] = 0;
+        matrix[1][2] = 0;
+        matrix[2][2] = 1;
+        return matrix;
+    }
+
+    void Window::BindVArray(vArray& array)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, array.id);
+        glEnableVertexAttribArray(vertexPosLoc);
+        glVertexAttribPointer(vertexPosLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    }
+
     void Window::SetBlendMode(BlendMode mode)
     {
         switch (mode)
@@ -170,39 +227,54 @@ namespace SimView
         return 1.0 / (frameEndTime - frameStartTime);
     }
 
-    void Window::RenderTriFull2D(vArray& array)
+    void Window::RenderTri(vArray& array, int index)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, array.id);
-        GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-        glEnableVertexAttribArray(posAttrib);
-        glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glUseProgram(shaderProgram);
+        BindVArray(array);
+        SetTransformMatrix(viewMatrix);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, index, 3);
     }
 
-    void Window::RenderLine2D(vArray& array)
+    void Window::RenderLine(vArray& array, int index)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, array.id);
-        GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-        glEnableVertexAttribArray(posAttrib);
-        glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glUseProgram(shaderProgram);
+        BindVArray(array);
+        SetTransformMatrix(viewMatrix);
 
-        glDrawArrays(GL_LINES, 0, 2);
+        glDrawArrays(GL_LINES, index, 2);
     }
 
-    void Window::RenderLines2D(vArray& array)
+    void Window::RenderLines(vArray& array, int index, int count)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, array.id);
-        GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-        glEnableVertexAttribArray(posAttrib);
-        glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glUseProgram(shaderProgram);
+        if (count == 0)
+            count = array.count - 1 - index;
+        else
+            count += 1;
 
-        for (int i = 0; i < array.count - 1; i++)
-        {
-            glDrawArrays(GL_LINES, i, 2);
-        }
+        BindVArray(array);
+        SetTransformMatrix(viewMatrix);
+
+        glDrawArrays(GL_LINE_STRIP, index, count);
+    }
+    void Window::RenderPolyline(vArray& array, int index, int count)
+    {
+        if (count == 0)
+            count = array.count - index;
+        else
+            count += 1;
+
+        BindVArray(array);
+        SetTransformMatrix(viewMatrix);
+
+        glDrawArrays(GL_LINE_LOOP, index, count - 1);
+    }
+    void Window::RenderPoints(vArray& array, int index, int count)
+    {
+        if (count == 0)
+            count = array.count - index;
+
+        BindVArray(array);
+        SetTransformMatrix(viewMatrix);
+
+        glDrawArrays(GL_POINTS, index, count);
     }
 }

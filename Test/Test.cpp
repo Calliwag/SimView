@@ -61,10 +61,10 @@ namespace Test
 			window.SetBlendMode(BlendMode::Add);
 
 			window.SetRenderColor(Color::Red(0.5));
-			window.RenderTriFull2D(triArray1);
+			window.RenderTri(triArray1);
 
 			window.SetRenderColor(Color::Green(1.0));
-			window.RenderTriFull2D(triArray2);
+			window.RenderTri(triArray2);
 
 			window.EndFrame();
 

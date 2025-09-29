@@ -7,65 +7,87 @@ int main()
 {
     std::cout << "Hello World!\n";
 
-	Core::Init();
-	Window window = Window::Create(400, 400, "test_window");
-	window.BeginContext();
-
-	glm::vec2 tri1[] = {
-		{  0,400},
-		{400,  0},
-		{400,400}
-	};
-	glm::vec2 tri2[] = {
-		{  0,400},
-		{400,400},
-		{  0,  0}
-	};
-	glm::vec2 lines[] = {
-		{100,100},
-		{300,300},
-		{100,300},
-		{300,100},
-		{100,100},
-	};
-
-	auto triArray1 = vArray::Init(3, tri1);
-	auto triArray2 = vArray::Init(3, tri2);
-	auto linesArray = vArray::Init(5, lines);
-
-	int frame = 0;
-	while (!window.ShouldClose())
+	try
 	{
-		frame++;
+		Core::Init();
+		Window window = Window::Create(400, 400, "test_window");
+		window.BeginContext();
 
-		window.BeginFrame();
+		glm::vec2 tri1[] = {
+			{  0,400},
+			{400,  0},
+			{400,400}
+		};
+		glm::vec2 tri2[] = {
+			{  0,400},
+			{400,400},
+			{  0,  0}
+		};
+		glm::vec2 lines[] = {
+			{100,100},
+			{300,300},
+			{100,300},
+			{300,100},
+		};
+		glm::vec2 rect[] = {
+			{100,100},
+			{100,200},
+			{200,100},
+			{200,200},
+		};
 
-		window.PollEvents();
-		window.FillScreen(Color::Black(1.0));
+		auto triArray1 = vArray::Init(3, tri1);
+		auto triArray2 = vArray::Init(3, tri2);
+		auto linesArray = vArray::Init(5, lines);
+		auto rectArray = vArray::Init(4, rect);
 
-		window.SetBlendMode(BlendMode::Add);
-
-		window.SetRenderColor(Color::Red(0.5));
-		window.RenderTriFull2D(triArray1);
-
-		window.SetRenderColor(Color::Green(1.0));
-		window.RenderTriFull2D(triArray2);
-
-		window.SetBlendMode(BlendMode::Default);
 		window.SetLineWidth(3);
+		window.SetPointSize(10);
 
-		window.SetRenderColor(Color::Blue(1.0));
-		window.RenderLines2D(linesArray);
+		int frame = 0;
+		while (!window.ShouldClose())
+		{
+			frame++;
 
-		window.EndFrame();
+			window.BeginFrame();
 
-		glm::vec2 newV[] = { {frame / 100.0,400 - frame / 100.0} };
-		triArray1.Set(0, 1, newV);
+			window.PollEvents();
+			window.FillScreen(Color::Black(1.0));
 
-		std::cout << "FPS: " << window.GetFPS() << std::endl;
+			window.SetBlendMode(BlendMode::Add);
+
+			window.SetRenderColor(Color::Green(1.0));
+			window.RenderTri(triArray2);
+
+			window.SetRenderColor(Color::Red(1.0));
+			window.RenderTri(triArray1);
+
+			window.RenderTri(rectArray, 0);
+			window.RenderTri(rectArray, 1);
+
+			window.SetBlendMode(BlendMode::Default);
+
+			window.SetRenderColor(Color::Blue(1.0));
+			//window.RenderLines(linesArray);
+			window.RenderPolyline(linesArray);
+			window.RenderPoints(linesArray);
+
+			window.EndFrame();
+
+			glm::vec2 newV[] = { {frame / 100.0,400 - frame / 100.0} };
+			triArray1.Set(0, 1, newV);
+
+			if(frame % 100 == 0)
+				std::cout << "FPS: " << window.GetFPS() << std::endl;
+		}
+
+		window.EndContext();
+		window.Destroy();
+		Core::DeInit();
+
 	}
-
-	window.EndContext();
-	window.Destroy();
-	Core::DeInit();
+	catch (std::runtime_error& err)
+	{
+		std::cout << err.what() << "\n";
+	}
 }

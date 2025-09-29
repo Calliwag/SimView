@@ -19,12 +19,14 @@ namespace SimView
 
 		GLuint shaderProgram;
 		GLuint VAO;
-		GLint windowSizeLoc;
+		GLint transMatLoc;
 		GLint renderColorLoc;
+		GLint vertexPosLoc;
 		int width;
 		int height;
 		double frameStartTime;
 		double frameEndTime;
+		glm::mat3x3 viewMatrix;
 
 		Window(int width, int height, std::string title);
 	public:
@@ -43,7 +45,8 @@ namespace SimView
 
 		// Helper functions
 
-		//float* ScreenToGLVerts(glm::vec2 points[], int count);
+		glm::mat3x3 GetViewMatrix();
+		void BindVArray(vArray& array);
 
 
 		// Settings functions
@@ -51,6 +54,8 @@ namespace SimView
 		void SetBlendMode(BlendMode mode);
 		void SetRenderColor(Color color);
 		void SetLineWidth(int width);
+		void SetPointSize(int size);
+		void SetTransformMatrix(glm::mat3x3& matrix);
 
 
 		// Misc. functions
@@ -61,8 +66,10 @@ namespace SimView
 
 		// Rendering functions
 
-		void RenderTriFull2D(vArray& array);
-		void RenderLine2D(vArray& array);
-		void RenderLines2D(vArray& array);
+		void RenderTri(vArray& array, int index = 0);
+		void RenderLine(vArray& array, int index = 0);
+		void RenderLines(vArray& array, int index = 0, int count = 0);
+		void RenderPolyline(vArray& array, int index = 0, int count = 0);
+		void RenderPoints(vArray& array, int index = 0, int count = 0);
 	};
 }
