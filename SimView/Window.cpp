@@ -13,23 +13,29 @@ namespace SimView
         glViewport(0, 0, width, height);
     }
 
-    const char* vertexShaderSource =
-        "#version 460 core\n"
-        "in vec2 position;\n"
-        "uniform mat3 transform;\n"
-        "void main()\n"
-        "{\n"
-        "   gl_Position = vec4(transform * vec3(position, 1.0f),1.0);\n"
-        "}\0";
+    const char* vertexShaderSource = /* vertex shader:*/ R"VERTEXSHADER(
 
-    const char* fragmentShaderSource =
-        "#version 460 core\n"
-        "uniform vec4 renderColor;\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "   FragColor = renderColor;\n"
-        "}\0";
+        #version 460 core
+        in vec2 position;
+        uniform mat3 transform;
+        void main()
+        {
+           gl_Position = vec4(transform * vec3(position, 1.0f),1.0);
+        };
+
+)VERTEXSHADER";
+
+    const char* fragmentShaderSource = /* fragment shader:*/ R"FRAGMENTSHADER(
+
+        #version 460 core
+        uniform vec4 renderColor;
+        out vec4 FragColor;
+        void main()
+        {
+           FragColor = renderColor;
+        }
+
+)FRAGMENTSHADER";
 
     Window::Window(int width, int height, std::string title)
     {
@@ -136,7 +142,9 @@ namespace SimView
 
     void Window::BeginFrame()
     {
+        frameTime = frameStartTime;
         frameStartTime = glfwGetTime();
+        frameTime = frameStartTime - frameTime;
         glfwGetFramebufferSize(windowPtr, &width, &height);
         glViewport(0, 0, width, height);
         viewMatrix = GetViewMatrix();
@@ -146,7 +154,6 @@ namespace SimView
     void Window::EndFrame()
     {
         glfwSwapBuffers(windowPtr);
-        frameEndTime = glfwGetTime();
     }
 
     void Window::PollEvents()
@@ -194,11 +201,19 @@ namespace SimView
         return matrix;
     }
 
-    void Window::BindVArray(vArray& array)
+    void Window::BindPosArray(vArray& array)
     {
         glBindBuffer(GL_ARRAY_BUFFER, array.id);
         glEnableVertexAttribArray(vertexPosLoc);
         glVertexAttribPointer(vertexPosLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        posArray = &array;
+        glBindBuffer(GL_ARRAY_BUFFER, NULL);
+    }
+
+    void Window::UnbindPosArray()
+    {
+        glDisableVertexAttribArray(vertexPosLoc);
+        posArray = nullptr;
     }
 
     void Window::SetBlendMode(BlendMode mode)
@@ -224,55 +239,50 @@ namespace SimView
 
     double Window::GetFPS()
     {
-        return 1.0 / (frameEndTime - frameStartTime);
+        return 1.0 / frameTime;
     }
 
-    void Window::RenderTri(vArray& array, int index)
+    void Window::RenderTri(int index)
     {
-        BindVArray(array);
         SetTransformMatrix(viewMatrix);
 
         glDrawArrays(GL_TRIANGLES, index, 3);
     }
 
-    void Window::RenderLine(vArray& array, int index)
+    void Window::RenderLine(int index)
     {
-        BindVArray(array);
         SetTransformMatrix(viewMatrix);
 
         glDrawArrays(GL_LINES, index, 2);
     }
 
-    void Window::RenderLines(vArray& array, int index, int count)
+    void Window::RenderLines(int index, int count)
     {
         if (count == 0)
-            count = array.count - 1 - index;
+            count = posArray->count - 1 - index;
         else
             count += 1;
 
-        BindVArray(array);
         SetTransformMatrix(viewMatrix);
 
         glDrawArrays(GL_LINE_STRIP, index, count);
     }
-    void Window::RenderPolyline(vArray& array, int index, int count)
+    void Window::RenderPolyline(int index, int count)
     {
         if (count == 0)
-            count = array.count - index;
+            count = posArray->count - index;
         else
             count += 1;
 
-        BindVArray(array);
         SetTransformMatrix(viewMatrix);
 
         glDrawArrays(GL_LINE_LOOP, index, count - 1);
     }
-    void Window::RenderPoints(vArray& array, int index, int count)
+    void Window::RenderPoints(int index, int count)
     {
         if (count == 0)
-            count = array.count - index;
+            count = posArray->count - index;
 
-        BindVArray(array);
         SetTransformMatrix(viewMatrix);
 
         glDrawArrays(GL_POINTS, index, count);

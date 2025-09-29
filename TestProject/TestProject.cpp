@@ -57,20 +57,25 @@ int main()
 			window.SetBlendMode(BlendMode::Add);
 
 			window.SetRenderColor(Color::Green(1.0));
-			window.RenderTri(triArray2);
+			window.BindPosArray(triArray2);
+			window.RenderTri();
 
 			window.SetRenderColor(Color::Red(1.0));
-			window.RenderTri(triArray1);
+			window.BindPosArray(triArray1);
+			window.RenderTri();
 
-			window.RenderTri(rectArray, 0);
-			window.RenderTri(rectArray, 1);
+			window.BindPosArray(rectArray);
+			window.RenderTri(0);
+			window.RenderTri(1);
 
 			window.SetBlendMode(BlendMode::Default);
 
+
 			window.SetRenderColor(Color::Blue(1.0));
-			//window.RenderLines(linesArray);
-			window.RenderPolyline(linesArray);
-			window.RenderPoints(linesArray);
+			window.BindPosArray(linesArray);
+			//window.RenderLines();
+			window.RenderPolyline();
+			window.RenderPoints();
 
 			window.EndFrame();
 

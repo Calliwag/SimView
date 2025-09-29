@@ -17,6 +17,8 @@ namespace SimView
 	public:
 		GLFWwindow* windowPtr;
 
+		vArray* posArray = nullptr;
+
 		GLuint shaderProgram;
 		GLuint VAO;
 		GLint transMatLoc;
@@ -25,7 +27,7 @@ namespace SimView
 		int width;
 		int height;
 		double frameStartTime;
-		double frameEndTime;
+		double frameTime;
 		glm::mat3x3 viewMatrix;
 
 		Window(int width, int height, std::string title);
@@ -46,7 +48,8 @@ namespace SimView
 		// Helper functions
 
 		glm::mat3x3 GetViewMatrix();
-		void BindVArray(vArray& array);
+		void BindPosArray(vArray& array);
+		void UnbindPosArray();
 
 
 		// Settings functions
@@ -66,10 +69,10 @@ namespace SimView
 
 		// Rendering functions
 
-		void RenderTri(vArray& array, int index = 0);
-		void RenderLine(vArray& array, int index = 0);
-		void RenderLines(vArray& array, int index = 0, int count = 0);
-		void RenderPolyline(vArray& array, int index = 0, int count = 0);
-		void RenderPoints(vArray& array, int index = 0, int count = 0);
+		void RenderTri(int index = 0);
+		void RenderLine(int index = 0);
+		void RenderLines(int index = 0, int count = 0);
+		void RenderPolyline(int index = 0, int count = 0);
+		void RenderPoints(int index = 0, int count = 0);
 	};
 }
