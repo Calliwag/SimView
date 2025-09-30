@@ -1,7 +1,11 @@
-#include "Texture.hpp"
+#include "SimView.hpp"
 
 namespace SimView
 {
+    Texture::Texture()
+    {
+        id = -1;
+    }
     Texture::Texture(int width, int height, Color* data)
     {
         glGenTextures(1, &id);

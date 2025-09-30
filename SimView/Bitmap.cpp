@@ -1,4 +1,4 @@
-#include "Bitmap.hpp"
+#include "SimView.hpp"
 #include <algorithm>
 
 namespace SimView
@@ -6,6 +6,12 @@ namespace SimView
 	Bitmap::~Bitmap()
 	{
 		delete[] data;
+	}
+	Bitmap::Bitmap(int width, int height, Color* data)
+	{
+		this->width = width;
+		this->height = height;
+		this->data = data;
 	}
 	int Bitmap::GetIndex(int x, int y)
 	{

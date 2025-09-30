@@ -1,4 +1,4 @@
-#include "Core.hpp"
+#include "SimView.hpp"
 #include <print>
 
 namespace SimView
@@ -19,6 +19,7 @@ namespace SimView
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     }
+
     void Core::DeInit()
     {
         glfwTerminate();

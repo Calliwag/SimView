@@ -4,5 +4,4 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="SimView/SimView.vcxproj" Id="126f8565-b8e7-48c4-841d-08313b58cdf1" />
-  <Project Path="TestProject/TestProject.vcxproj" Id="c07967f5-0b15-4917-b3fe-675252c5d4d7" />
 </Solution>
