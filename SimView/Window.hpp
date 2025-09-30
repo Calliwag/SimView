@@ -3,13 +3,56 @@
 #include "Includes.hpp"
 #include "Color.hpp"
 #include "vArray.hpp"
+#include "Texture.hpp"
 
 namespace SimView
 {
 	enum class BlendMode
 	{
 		Default,
+		Alpha,
 		Add,
+	};
+
+	class Window;
+
+	class ShaderProgram
+	{
+	public:
+		GLuint id;
+		bool instanced;
+
+		GLint renderColorLoc;
+		GLint transMatLoc;
+		GLint vertexPosLoc;
+		GLint vertexUVLoc;
+		GLint instanceArrLoc;
+
+		vArray* posArray = nullptr;
+		vArray* uvArray = nullptr;
+		Texture* texture = nullptr;
+		vArray* instanceArray = nullptr;
+
+		glm::mat3x3 currentMatrix;
+
+		ShaderProgram(const char* vertexSource, const char* fragmentSource, bool instanced);
+		void Use();
+		void Draw(GLenum drawCall, GLint index, GLsizei count);
+		void BindPosArray(vArray& array);
+		void UnbindPosArray();
+
+		void BindUVArray(vArray& array);
+		void UnbindUVArray();
+
+		void BindInstanceArray(vArray& array);
+		void UnbindInstanceArray();
+
+		void BindTexture(Texture& tex);
+		void UnbindTexture();
+
+		void SetRenderColor(Color color);
+
+		void SetTransformMatrix(glm::mat3x3& matrix);
 	};
 
 	class Window
@@ -17,13 +60,11 @@ namespace SimView
 	public:
 		GLFWwindow* windowPtr;
 
-		vArray* posArray = nullptr;
-
-		GLuint shaderProgram;
+		GLuint shaderProgram_flat;
+		GLuint shaderProgram_texture;
+		GLuint shaderProgram_instanceTexture;
+		ShaderProgram* currentShader;
 		GLuint VAO;
-		GLint transMatLoc;
-		GLint renderColorLoc;
-		GLint vertexPosLoc;
 		int width;
 		int height;
 		double frameStartTime;
@@ -48,17 +89,18 @@ namespace SimView
 		// Helper functions
 
 		glm::mat3x3 GetViewMatrix();
-		void BindPosArray(vArray& array);
-		void UnbindPosArray();
+
+		void SetShader(ShaderProgram& shaderProgram);
+		ShaderProgram GetFlatShader();
+		ShaderProgram GetTexShader();
+		ShaderProgram GetInstTexShader();
 
 
 		// Settings functions
 
 		void SetBlendMode(BlendMode mode);
-		void SetRenderColor(Color color);
 		void SetLineWidth(int width);
 		void SetPointSize(int size);
-		void SetTransformMatrix(glm::mat3x3& matrix);
 
 
 		// Misc. functions
@@ -70,6 +112,7 @@ namespace SimView
 		// Rendering functions
 
 		void RenderTri(int index = 0);
+		void RenderQuad(int index = 0);
 		void RenderLine(int index = 0);
 		void RenderLines(int index = 0, int count = 0);
 		void RenderPolyline(int index = 0, int count = 0);

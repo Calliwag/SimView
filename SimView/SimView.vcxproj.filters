@@ -30,10 +30,13 @@
     <ClInclude Include="Color.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CPUTexture.hpp">
+    <ClInclude Include="Bitmap.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vArray.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,10 +47,13 @@
     <ClCompile Include="Core.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CPUTexture.cpp">
+    <ClCompile Include="Bitmap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vArray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,9 +1,10 @@
 #include <iostream>
 #include "../SimView/SimView.hpp"
+#include <random>
 
 using namespace SimView;
 
-int main()
+void main()
 {
     std::cout << "Hello World!\n";
 
@@ -13,36 +14,75 @@ int main()
 		Window window = Window::Create(400, 400, "test_window");
 		window.BeginContext();
 
-		glm::vec2 tri1[] = {
-			{  0,400},
-			{400,  0},
-			{400,400}
-		};
-		glm::vec2 tri2[] = {
-			{  0,400},
-			{400,400},
-			{  0,  0}
-		};
-		glm::vec2 lines[] = {
-			{100,100},
-			{300,300},
-			{100,300},
-			{300,100},
-		};
 		glm::vec2 rect[] = {
-			{100,100},
-			{100,200},
-			{200,100},
-			{200,200},
+			{-1,-1},
+			{-1, 1},
+			{ 1, 1},
+			{ 1,-1},
+		};
+		glm::vec2 rectUV[] = {
+			{0,0},
+			{0,1},
+			{1,1},
+			{1,0},
+		};
+		glm::vec2 tri[] = {
+			{ -1.0, -1.0 },
+			{ 1 + sqrt(2.0),-1.0 },
+			{-1.0, 1 + sqrt(2.0) },
+		};
+		glm::vec2 triUV[] = {
+			{ 0.0, 0.0 },
+			{ 0.0, 1.0 + sqrt(0.5) },
+			{ 1.0 + sqrt(0.5), 0.0 },
 		};
 
-		auto triArray1 = vArray::Init(3, tri1);
-		auto triArray2 = vArray::Init(3, tri2);
-		auto linesArray = vArray::Init(5, lines);
-		auto rectArray = vArray::Init(4, rect);
+		float scale = 5.0;
+		for (int i = 0; i < 4; i++)
+		{
+			rect[i] = scale * rect[i];
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			tri[i] = scale * tri[i];
+		}
 
-		window.SetLineWidth(3);
-		window.SetPointSize(10);
+		int count = 1000000;
+		glm::vec2* inst = new glm::vec2[count];
+		std::mt19937 rd(0);
+		std::uniform_real_distribution<float> dX(0, window.width);
+		std::uniform_real_distribution<float> dY(0, window.height);
+		for (int i = 0; i < count; i++)
+		{
+			inst[i] = { dX(rd),dY(rd) };
+		}
+
+		auto rectArray = vArray::Init(4, rect);
+		auto rectUVArray = vArray::Init(4, rectUV);
+		auto triArray = vArray::Init(3, tri);
+		auto triUVArray = vArray::Init(3, triUV);
+		auto instArray = vArray::Init(count, inst);
+
+		float radius = 100;
+		Bitmap image = Bitmap::GetColorImage(2 * radius, 2 * radius, Color::Black(0.0f));
+		for (int x = 0; x < 2 * radius; x++)
+			for (int y = 0; y < 2 * radius; y++)
+			{
+				if (pow(x - radius, 2) + pow(y - radius, 2) < radius * radius)
+				{
+					image.SetPixel(x, y, Color::White(0.1f));
+				}
+			}
+		auto texture = Texture::FromBitmap(image);
+
+		auto instTexShader = window.GetInstTexShader();
+		window.SetShader(instTexShader);
+		window.SetBlendMode(BlendMode::Alpha);
+		instTexShader.SetRenderColor(Color::White(1.0));
+		instTexShader.BindPosArray(triArray);
+		instTexShader.BindUVArray(triUVArray);
+		instTexShader.BindInstanceArray(instArray);
+		instTexShader.BindTexture(texture);
 
 		int frame = 0;
 		while (!window.ShouldClose())
@@ -50,37 +90,16 @@ int main()
 			frame++;
 
 			window.BeginFrame();
-
+			instTexShader.SetTransformMatrix(window.viewMatrix);
 			window.PollEvents();
 			window.FillScreen(Color::Black(1.0));
 
-			window.SetBlendMode(BlendMode::Add);
-
-			window.SetRenderColor(Color::Green(1.0));
-			window.BindPosArray(triArray2);
 			window.RenderTri();
-
-			window.SetRenderColor(Color::Red(1.0));
-			window.BindPosArray(triArray1);
-			window.RenderTri();
-
-			window.BindPosArray(rectArray);
-			window.RenderTri(0);
-			window.RenderTri(1);
-
-			window.SetBlendMode(BlendMode::Default);
-
-
-			window.SetRenderColor(Color::Blue(1.0));
-			window.BindPosArray(linesArray);
-			//window.RenderLines();
-			window.RenderPolyline();
-			window.RenderPoints();
+			//window.RenderQuad();
+			//window.SetPointSize(10);
+			//window.RenderPoints();
 
 			window.EndFrame();
-
-			glm::vec2 newV[] = { {frame / 100.0,400 - frame / 100.0} };
-			triArray1.Set(0, 1, newV);
 
 			if(frame % 100 == 0)
 				std::cout << "FPS: " << window.GetFPS() << std::endl;
@@ -94,5 +113,6 @@ int main()
 	catch (std::runtime_error& err)
 	{
 		std::cout << err.what() << "\n";
+		return;
 	}
 }

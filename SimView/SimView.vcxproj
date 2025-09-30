@@ -21,15 +21,17 @@
   <ItemGroup>
     <ClInclude Include="Color.hpp" />
     <ClInclude Include="Core.hpp" />
-    <ClInclude Include="CPUTexture.hpp" />
+    <ClInclude Include="Bitmap.hpp" />
     <ClInclude Include="Includes.hpp" />
     <ClInclude Include="SimView.hpp" />
+    <ClInclude Include="Texture.hpp" />
     <ClInclude Include="vArray.hpp" />
     <ClInclude Include="Window.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
-    <ClCompile Include="CPUTexture.cpp" />
+    <ClCompile Include="Bitmap.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="vArray.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>

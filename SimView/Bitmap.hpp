@@ -4,12 +4,12 @@
 
 namespace SimView
 {
-	class CPUTexture
+	class Bitmap
 	{
 	public:
 		Color* data = nullptr;
 
-		CPUTexture(int width, int height, Color* data)
+		Bitmap(int width, int height, Color* data)
 		{
 			this->width = width;
 			this->height = height;
@@ -20,9 +20,9 @@ namespace SimView
 		int width;
 		int height;
 
-		static CPUTexture GetColorImage(int width, int height, Color color);
+		static Bitmap GetColorImage(int width, int height, Color color);
 		Color GetPixel(int x, int y);
 		void SetPixel(int x, int y, Color color);
-		~CPUTexture();
+		~Bitmap();
 	};
 }

@@ -13,29 +13,217 @@ namespace SimView
         glViewport(0, 0, width, height);
     }
 
-    const char* vertexShaderSource = /* vertex shader:*/ R"VERTEXSHADER(
+    const char* vertexShaderFlatSource = /* vertex shader:*/ R"(
 
         #version 460 core
         in vec2 position;
         uniform mat3 transform;
+
         void main()
         {
-           gl_Position = vec4(transform * vec3(position, 1.0f),1.0);
+            gl_Position = vec4(transform * vec3(position, 1.0f),1.0);
         };
 
-)VERTEXSHADER";
+)";
 
-    const char* fragmentShaderSource = /* fragment shader:*/ R"FRAGMENTSHADER(
+    const char* fragmentShaderFlatSource = /* fragment shader:*/ R"(
 
         #version 460 core
         uniform vec4 renderColor;
         out vec4 FragColor;
         void main()
         {
-           FragColor = renderColor;
+            FragColor = renderColor;
         }
 
-)FRAGMENTSHADER";
+)";
+
+    const char* vertexShaderTextureSource = /* vertex shader:*/ R"(
+
+        #version 460 core
+        in vec2 position;
+        uniform mat3 transform;
+        in vec2 inputTexCoord;
+        out vec2 texCoord;
+        void main()
+        {
+            gl_Position = vec4(transform * vec3(position, 1.0f),1.0);
+            texCoord = inputTexCoord;
+        };
+
+)";
+
+    const char* fragmentShaderTextureSource = /* fragment shader:*/ R"(
+
+        #version 460 core
+        in vec2 texCoord;
+        uniform vec4 renderColor;
+        uniform sampler2D inputTexture;
+        out vec4 FragColor;
+        void main()
+        {
+            FragColor = texture(inputTexture, texCoord) * renderColor;
+        }
+
+)";
+
+    const char* vertexShaderInstanceTextureSource = /* vertex shader:*/ R"(
+
+        #version 460 core
+        in vec2 position;
+        uniform mat3 transform;
+        in vec2 inputTexCoord;
+        in vec2 offset;
+        out vec2 texCoord;
+        void main()
+        {
+            gl_Position = vec4(transform * vec3(offset + position, 1.0f), 1.0f);
+            texCoord = inputTexCoord;
+        };
+
+)";
+
+    ShaderProgram::ShaderProgram(const char* vertexSource, const char* fragmentSource, bool instanced)
+    {
+        this->instanced = instanced;
+
+        GLuint vertexShader;
+        GLuint fragmentShader;
+        int success;
+
+        vertexShader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertexShader, 1, &vertexSource, NULL);
+        glCompileShader(vertexShader);
+        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            char infoLog[512];
+            glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+            throw std::runtime_error("Renderer Error: Failed to compile vertex shader\n" + std::string(infoLog) + "\n");
+        }
+
+        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
+        glCompileShader(fragmentShader);
+        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            char infoLog[512];
+            glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+            throw std::runtime_error("Renderer Error: Failed to compile fragment shader\n" + std::string(infoLog) + "\n");
+        }
+
+        id = glCreateProgram();
+        glAttachShader(id, vertexShader);
+        glAttachShader(id, fragmentShader);
+        glLinkProgram(id);
+        glGetShaderiv(id, GL_LINK_STATUS, &success);
+        if (!success)
+        {
+            char infoLog[512];
+            glGetShaderInfoLog(id, 512, NULL, infoLog);
+            throw std::runtime_error("Renderer Error: Failed to compile shader program\n" + std::string(infoLog) + "\n");
+        }
+
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+
+        glUseProgram(id);
+
+        renderColorLoc = glGetUniformLocation(id, "renderColor");
+        transMatLoc = glGetUniformLocation(id, "transform");
+        vertexPosLoc = glGetAttribLocation(id, "position");
+        vertexUVLoc = glGetAttribLocation(id, "inputTexCoord");
+        instanceArrLoc = glGetAttribLocation(id, "offset");
+
+        glUseProgram(0);
+    }
+
+    void ShaderProgram::Use()
+    {
+        glUseProgram(id);
+    }
+
+    void ShaderProgram::Draw(GLenum drawCall, GLint index, GLsizei count)
+    {
+        if (instanced)
+        {
+            glDrawArraysInstanced(drawCall, index, count, instanceArray->count);
+        }
+        else
+        {
+            glDrawArrays(drawCall, index, count);
+        }
+    }
+
+    void ShaderProgram::BindPosArray(vArray& array)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, array.id);
+        glEnableVertexAttribArray(vertexPosLoc);
+        glVertexAttribPointer(vertexPosLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        posArray = &array;
+        glBindBuffer(GL_ARRAY_BUFFER, NULL);
+    }
+
+    void ShaderProgram::UnbindPosArray()
+    {
+        glDisableVertexAttribArray(vertexPosLoc);
+        posArray = nullptr;
+    }
+
+    void ShaderProgram::BindUVArray(vArray& array)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, array.id);
+        glEnableVertexAttribArray(vertexUVLoc);
+        glVertexAttribPointer(vertexUVLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        uvArray = &array;
+        glBindBuffer(GL_ARRAY_BUFFER, NULL);
+    }
+
+    void ShaderProgram::UnbindUVArray()
+    {
+        glDisableVertexAttribArray(vertexUVLoc);
+        uvArray = nullptr;
+    }
+
+    void ShaderProgram::BindInstanceArray(vArray& array)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, array.id);
+        glEnableVertexAttribArray(instanceArrLoc);
+        glVertexAttribPointer(instanceArrLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        instanceArray = &array;
+        glBindBuffer(GL_ARRAY_BUFFER, NULL);
+        glVertexAttribDivisor(instanceArrLoc, 1);
+    }
+
+    void ShaderProgram::UnbindInstanceArray()
+    {
+        glDisableVertexAttribArray(instanceArrLoc);
+        instanceArray = nullptr;
+    }
+
+    void ShaderProgram::BindTexture(Texture& tex)
+    {
+        glBindTexture(GL_TEXTURE_2D, tex.id);
+        texture = &tex;
+    }
+
+    void ShaderProgram::UnbindTexture()
+    {
+        glBindTexture(GL_TEXTURE_2D, 0);
+        texture = nullptr;
+    }
+
+    void ShaderProgram::SetRenderColor(Color color)
+    {
+        glUniform4f(renderColorLoc, color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
+    }
+
+    void ShaderProgram::SetTransformMatrix(glm::mat3x3& matrix)
+    {
+        glUniformMatrix3fv(transMatLoc, 1, GL_FALSE, glm::value_ptr(matrix));
+        currentMatrix = matrix;
+    }
 
     Window::Window(int width, int height, std::string title)
     {
@@ -62,60 +250,13 @@ namespace SimView
 
         glfwSwapInterval(0);
 
-        GLuint vertexShader;
-        GLuint fragmentShader;
-        int success;
-
-        vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-        glCompileShader(vertexShader);
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-        if (!success)
-        {
-            char infoLog[512];
-            glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-            throw std::runtime_error("Renderer Error: Failed to compile vertex shader\n" + std::string(infoLog) + "\n");
-        }
-        err = glGetError();
-
-        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-        glCompileShader(fragmentShader);
-        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-        if (!success)
-        {
-            char infoLog[512];
-            glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-            throw std::runtime_error("Renderer Error: Failed to compile fragment shader\n" + std::string(infoLog) + "\n");
-        }
-        err = glGetError();
-
-        shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragmentShader);
-        glLinkProgram(shaderProgram);
-        glGetShaderiv(shaderProgram, GL_LINK_STATUS, &success);
-        if (!success)
-        {
-            char infoLog[512];
-            glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);
-            throw std::runtime_error("Renderer Error: Failed to compile shader program\n" + std::string(infoLog) + "\n");
-        }
-        err = glGetError();
-
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-
-        glUseProgram(shaderProgram);
-
-        renderColorLoc = glGetUniformLocation(shaderProgram, "renderColor");
-        transMatLoc = glGetUniformLocation(shaderProgram, "transform");
-        vertexPosLoc = glGetAttribLocation(shaderProgram, "position");
-
         glGenVertexArrays(1, &VAO);
         glBindVertexArray(VAO);
 
         glEnable(GL_BLEND);
+
+        BeginFrame();
+        EndFrame();
 
         EndContext();
     }
@@ -148,7 +289,6 @@ namespace SimView
         glfwGetFramebufferSize(windowPtr, &width, &height);
         glViewport(0, 0, width, height);
         viewMatrix = GetViewMatrix();
-        glUseProgram(shaderProgram);
     }
 
     void Window::EndFrame()
@@ -166,11 +306,6 @@ namespace SimView
         glfwDestroyWindow(windowPtr);
     }
 
-    void Window::SetRenderColor(Color color)
-    {
-        glUniform4f(renderColorLoc, color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
-    }
-
     void Window::SetLineWidth(int width)
     {
         glLineWidth(width);
@@ -179,11 +314,6 @@ namespace SimView
     void Window::SetPointSize(int size)
     {
         glPointSize(size);
-    }
-
-    void Window::SetTransformMatrix(glm::mat3x3& matrix)
-    {
-        glUniformMatrix3fv(transMatLoc, 1, GL_FALSE, glm::value_ptr(matrix));
     }
 
     glm::mat3x3 Window::GetViewMatrix()
@@ -201,19 +331,25 @@ namespace SimView
         return matrix;
     }
 
-    void Window::BindPosArray(vArray& array)
+    void Window::SetShader(ShaderProgram& shaderProgram)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, array.id);
-        glEnableVertexAttribArray(vertexPosLoc);
-        glVertexAttribPointer(vertexPosLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        posArray = &array;
-        glBindBuffer(GL_ARRAY_BUFFER, NULL);
+        currentShader = &shaderProgram;
+        currentShader->Use();
     }
 
-    void Window::UnbindPosArray()
+    ShaderProgram Window::GetFlatShader()
     {
-        glDisableVertexAttribArray(vertexPosLoc);
-        posArray = nullptr;
+        return ShaderProgram(vertexShaderFlatSource,fragmentShaderFlatSource, false);
+    }
+
+    ShaderProgram Window::GetTexShader()
+    {
+        return ShaderProgram(vertexShaderTextureSource,fragmentShaderTextureSource, false);
+    }
+
+    ShaderProgram Window::GetInstTexShader()
+    {
+        return ShaderProgram(vertexShaderInstanceTextureSource, fragmentShaderTextureSource, true);
     }
 
     void Window::SetBlendMode(BlendMode mode)
@@ -222,6 +358,11 @@ namespace SimView
         {
         case(BlendMode::Default):
             glDisable(GL_BLEND);
+            break;
+        case(BlendMode::Alpha):
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glBlendEquation(GL_FUNC_ADD);
             break;
         case(BlendMode::Add):
             glEnable(GL_BLEND);
@@ -244,47 +385,44 @@ namespace SimView
 
     void Window::RenderTri(int index)
     {
-        SetTransformMatrix(viewMatrix);
+        currentShader->Draw(GL_TRIANGLES, index, 3);
+    }
 
-        glDrawArrays(GL_TRIANGLES, index, 3);
+    void Window::RenderQuad(int index)
+    {
+        currentShader->Draw(GL_TRIANGLE_FAN, index, 4);
     }
 
     void Window::RenderLine(int index)
     {
-        SetTransformMatrix(viewMatrix);
-
-        glDrawArrays(GL_LINES, index, 2);
+        currentShader->Draw(GL_LINES, index, 2);
     }
 
     void Window::RenderLines(int index, int count)
     {
         if (count == 0)
-            count = posArray->count - 1 - index;
+            count = currentShader->posArray->count - 1 - index;
         else
             count += 1;
 
-        SetTransformMatrix(viewMatrix);
-
-        glDrawArrays(GL_LINE_STRIP, index, count);
+        currentShader->Draw(GL_LINE_STRIP, index, count);
     }
+
     void Window::RenderPolyline(int index, int count)
     {
         if (count == 0)
-            count = posArray->count - index;
+            count = currentShader->posArray->count - index;
         else
             count += 1;
 
-        SetTransformMatrix(viewMatrix);
-
-        glDrawArrays(GL_LINE_LOOP, index, count - 1);
+        currentShader->Draw(GL_LINE_LOOP, index, count - 1);
     }
+
     void Window::RenderPoints(int index, int count)
     {
         if (count == 0)
-            count = posArray->count - index;
+            count = currentShader->posArray->count - index;
 
-        SetTransformMatrix(viewMatrix);
-
-        glDrawArrays(GL_POINTS, index, count);
+        currentShader->Draw(GL_POINTS, index, count);
     }
 }
