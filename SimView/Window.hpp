@@ -14,8 +14,6 @@ namespace SimView
 		Add,
 	};
 
-	class Window;
-
 	class ShaderProgram
 	{
 	public:
@@ -27,11 +25,13 @@ namespace SimView
 		GLint vertexPosLoc;
 		GLint vertexUVLoc;
 		GLint instanceArrLoc;
+		GLint vertexColorLoc;
 
 		vArray* posArray = nullptr;
 		vArray* uvArray = nullptr;
 		Texture* texture = nullptr;
 		vArray* instanceArray = nullptr;
+		vArray* colorArray = nullptr;
 
 		glm::mat3x3 currentMatrix;
 
@@ -49,6 +49,9 @@ namespace SimView
 
 		void BindTexture(Texture& tex);
 		void UnbindTexture();
+
+		void BindColorArray(vArray& array);
+		void UnbindColorArray();
 
 		void SetRenderColor(Color color);
 
@@ -94,6 +97,7 @@ namespace SimView
 		ShaderProgram GetFlatShader();
 		ShaderProgram GetTexShader();
 		ShaderProgram GetInstTexShader();
+		ShaderProgram GetInstTexColorShader();
 
 
 		// Settings functions

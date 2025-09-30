@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Includes.hpp"
+#include "Color.hpp"
 
 namespace SimView
 {
@@ -41,6 +42,10 @@ namespace SimView
 		}
 
 		static vArray Init(int size, glm::vec2 points[]);
+		static vArray Init(int size, Color colors[]);
+		static vArray Init(int size, FColor colors[]);
 		void Set(int index, int size, glm::vec2 points[]);
+		void Set(int index, int size, Color colors[]);
+		void Set(int index, int size, FColor colors[]);
 	};
 }

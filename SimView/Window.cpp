@@ -83,6 +83,39 @@ namespace SimView
 
 )";
 
+    const char* vertexShaderInstanceTextureColorSource = /* vertex shader:*/ R"(
+
+        #version 460 core
+        in vec2 position;
+        in vec2 inputTexCoord;
+        in vec2 offset;
+        in vec4 inColor;
+        uniform mat3 transform;
+        out vec2 texCoord;
+        out vec4 color;
+        void main()
+        {
+            gl_Position = vec4(transform * vec3(offset + position, 1.0f), 1.0f);
+            texCoord = inputTexCoord;
+            color = inColor;
+        };
+
+)";
+
+    const char* fragmentShaderInstanceTextureColorSource = /* fragment shader:*/ R"(
+
+        #version 460 core
+        in vec2 texCoord;
+        in vec4 color;
+        uniform sampler2D inputTexture;
+        out vec4 FragColor;
+        void main()
+        {
+            FragColor = texture(inputTexture, texCoord) * color;
+        }
+
+)";
+
     ShaderProgram::ShaderProgram(const char* vertexSource, const char* fragmentSource, bool instanced)
     {
         this->instanced = instanced;
@@ -135,6 +168,7 @@ namespace SimView
         vertexPosLoc = glGetAttribLocation(id, "position");
         vertexUVLoc = glGetAttribLocation(id, "inputTexCoord");
         instanceArrLoc = glGetAttribLocation(id, "offset");
+        vertexColorLoc = glGetAttribLocation(id, "inColor");
 
         glUseProgram(0);
     }
@@ -212,6 +246,23 @@ namespace SimView
     {
         glBindTexture(GL_TEXTURE_2D, 0);
         texture = nullptr;
+    }
+
+    void ShaderProgram::BindColorArray(vArray& array)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, array.id);
+        glEnableVertexAttribArray(vertexColorLoc);
+        glVertexAttribPointer(vertexColorLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+        colorArray = &array;
+        glBindBuffer(GL_ARRAY_BUFFER, NULL);
+        if (instanced)
+            glVertexAttribDivisor(vertexColorLoc, 1);
+    }
+
+    void ShaderProgram::UnbindColorArray()
+    {
+        glDisableVertexAttribArray(vertexColorLoc);
+        colorArray = nullptr;
     }
 
     void ShaderProgram::SetRenderColor(Color color)
@@ -350,6 +401,11 @@ namespace SimView
     ShaderProgram Window::GetInstTexShader()
     {
         return ShaderProgram(vertexShaderInstanceTextureSource, fragmentShaderTextureSource, true);
+    }
+
+    ShaderProgram Window::GetInstTexColorShader()
+    {
+        return ShaderProgram(vertexShaderInstanceTextureColorSource, fragmentShaderInstanceTextureColorSource, true);
     }
 
     void Window::SetBlendMode(BlendMode mode)
