@@ -82,6 +82,8 @@ namespace SimView
 
     void ShaderProgram::BindArray(vArray& array, std::string name)
     {
+        if (!varLocs.contains(name))
+            throw std::runtime_error("Shader Error: Shader variable not found\n");
         GLint loc = varLocs[name];
         glBindBuffer(GL_ARRAY_BUFFER, array.id);
         glEnableVertexAttribArray(loc);
@@ -91,12 +93,16 @@ namespace SimView
 
     void ShaderProgram::BindColor(Color& color, std::string name)
     {
+        if (!varLocs.contains(name))
+            throw std::runtime_error("Shader Error: Shader variable not found\n");
         GLint loc = varLocs[name];
         glUniform4f(loc, color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
     }
 
     void ShaderProgram::BindInstanceArray(vArray& array, std::string name)
     {
+        if (!varLocs.contains(name))
+            throw std::runtime_error("Shader Error: Shader variable not found\n");
         GLint loc = varLocs[name];
         glBindBuffer(GL_ARRAY_BUFFER, array.id);
         glEnableVertexAttribArray(loc);
@@ -113,6 +119,8 @@ namespace SimView
 
     void ShaderProgram::BindMat3x3(glm::mat3x3& matrix, std::string name)
     {
+        if (!varLocs.contains(name))
+            throw std::runtime_error("Shader Error: Shader variable not found\n");
         GLint loc = varLocs[name];
         glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
     }

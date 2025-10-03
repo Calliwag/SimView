@@ -94,9 +94,11 @@ namespace SimView
 		vArray(vArray& other);
 		~vArray();
 
+		static vArray Init(int size, float values[]);
 		static vArray Init(int size, glm::vec2 points[]);
 		static vArray Init(int size, Color colors[]);
 		static vArray Init(int size, FColor colors[]);
+		void Set(int index, int size, float values[]);
 		void Set(int index, int size, glm::vec2 points[]);
 		void Set(int index, int size, Color colors[]);
 		void Set(int index, int size, FColor colors[]);

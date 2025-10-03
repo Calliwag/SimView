@@ -36,6 +36,15 @@ namespace SimView
         }
     }
 
+    vArray vArray::Init(int size, float values[])
+    {
+        GLuint id;
+        glGenBuffers(1, &id);
+        glBindBuffer(GL_ARRAY_BUFFER, id);
+        glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), (float*)values, GL_STATIC_DRAW);
+        return vArray(id, size, 1);
+    }
+
     vArray vArray::Init(int size, glm::vec2 points[])
     {
         GLuint id;
@@ -66,6 +75,12 @@ namespace SimView
         glBindBuffer(GL_ARRAY_BUFFER, id);
         glBufferData(GL_ARRAY_BUFFER, size * sizeof(FColor), (float*)colors, GL_STATIC_DRAW);
         return vArray(id, size, 4);
+    }
+
+    void vArray::Set(int index, int size, float values[])
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, id);
+        glBufferSubData(GL_ARRAY_BUFFER, index * sizeof(float), size * sizeof(float), (float*)values);
     }
 
     void vArray::Set(int index, int size, glm::vec2 points[])
