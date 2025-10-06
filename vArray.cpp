@@ -2,20 +2,25 @@
 
 namespace SimView
 {
-    vArray::vArray()
+    VArray::VArray()
     {
         this->hasArray = false;
     }
 
-    vArray::vArray(GLuint id, int count, int elemSize)
+    VArray::VArray(int elemCount, int elemSize, void* data)
     {
+        GLuint id;
+        glGenBuffers(1, &id);
+        glBindBuffer(GL_ARRAY_BUFFER, id);
+        glBufferData(GL_ARRAY_BUFFER, elemCount * elemSize * sizeof(float), data, GL_STATIC_DRAW);
         this->id = id;
-        this->count = count;
+        this->count = elemCount;
         this->elemSize = elemSize;
         this->hasArray = true;
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    vArray::vArray(vArray& other)
+    VArray::VArray(VArray& other)
     {
         if (this->hasArray)
         {
@@ -28,7 +33,24 @@ namespace SimView
         other.hasArray = false;
     }
 
-    vArray::~vArray()
+    VArray& VArray::operator=(VArray&& other)
+    {
+        if (this != &other)
+        {
+            if (this->hasArray)
+            {
+                glDeleteBuffers(1, &id);
+            }
+            this->id = other.id;
+            this->count = other.count;
+            this->elemSize = other.elemSize;
+            this->hasArray = other.hasArray;
+            other.hasArray = false;
+        }
+        return *this;
+    }
+
+    VArray::~VArray()
     {
         if (hasArray)
         {
@@ -36,71 +58,18 @@ namespace SimView
         }
     }
 
-    vArray vArray::Init(int size, float values[])
+    void VArray::Set(int index, int elemCount, void* data)
     {
-        GLuint id;
-        glGenBuffers(1, &id);
         glBindBuffer(GL_ARRAY_BUFFER, id);
-        glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), (float*)values, GL_STATIC_DRAW);
-        return vArray(id, size, 1);
+        glBufferSubData(GL_ARRAY_BUFFER, index * elemSize * sizeof(float), elemCount * elemSize * sizeof(float), data);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
-
-    vArray vArray::Init(int size, glm::vec2 points[])
+    void VArray::Destroy()
     {
-        GLuint id;
-        glGenBuffers(1, &id);
-        glBindBuffer(GL_ARRAY_BUFFER, id);
-        glBufferData(GL_ARRAY_BUFFER, size * sizeof(glm::vec2), (float*)points, GL_STATIC_DRAW);
-        return vArray(id, size, 2);
-    }
-
-    vArray vArray::Init(int size, Color colors[])
-    {
-        FColor* fColors = new FColor[size];
-        for (int i = 0; i < size; i++)
+        if (hasArray)
         {
-            fColors[i] = FColor::Convert(colors[i]);
+            glDeleteBuffers(1, &id);
         }
-        GLuint id;
-        glGenBuffers(1, &id);
-        glBindBuffer(GL_ARRAY_BUFFER, id);
-        glBufferData(GL_ARRAY_BUFFER, size * sizeof(FColor), (float*)fColors, GL_STATIC_DRAW);
-        return vArray(id, size, 4);
-    }
-
-    vArray vArray::Init(int size, FColor colors[])
-    {
-        GLuint id;
-        glGenBuffers(1, &id);
-        glBindBuffer(GL_ARRAY_BUFFER, id);
-        glBufferData(GL_ARRAY_BUFFER, size * sizeof(FColor), (float*)colors, GL_STATIC_DRAW);
-        return vArray(id, size, 4);
-    }
-
-    void vArray::Set(int index, int size, float values[])
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, id);
-        glBufferSubData(GL_ARRAY_BUFFER, index * sizeof(float), size * sizeof(float), (float*)values);
-    }
-
-    void vArray::Set(int index, int size, glm::vec2 points[])
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, id);
-        glBufferSubData(GL_ARRAY_BUFFER, index * sizeof(glm::vec2), size * sizeof(glm::vec2), (float*)points);
-    }
-    void vArray::Set(int index, int size, Color colors[])
-    {
-        FColor* fColors = new FColor[size];
-        for (int i = 0; i < size; i++)
-        {
-            fColors[i] = FColor::Convert(colors[i]);
-        }
-        Set(index, size, fColors);
-        delete[] fColors;
-    }
-    void vArray::Set(int index, int size, FColor colors[])
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, id);
-        glBufferSubData(GL_ARRAY_BUFFER, index * sizeof(FColor), size * sizeof(FColor), (float*)colors);
+        hasArray = false;
     }
 }

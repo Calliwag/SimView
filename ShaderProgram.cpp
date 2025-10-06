@@ -80,7 +80,7 @@ namespace SimView
         }
     }
 
-    void ShaderProgram::BindArray(vArray& array, std::string name)
+    void ShaderProgram::BindArray(VArray& array, std::string name)
     {
         if (!varLocs.contains(name))
             throw std::runtime_error("Shader Error: Shader variable not found\n");
@@ -88,7 +88,7 @@ namespace SimView
         glBindBuffer(GL_ARRAY_BUFFER, array.id);
         glEnableVertexAttribArray(loc);
         glVertexAttribPointer(loc, array.elemSize, GL_FLOAT, GL_FALSE, 0, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, NULL);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void ShaderProgram::BindColor(Color& color, std::string name)
@@ -99,7 +99,7 @@ namespace SimView
         glUniform4f(loc, color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
     }
 
-    void ShaderProgram::BindInstanceArray(vArray& array, std::string name)
+    void ShaderProgram::BindInstanceArray(VArray& array, std::string name)
     {
         if (!varLocs.contains(name))
             throw std::runtime_error("Shader Error: Shader variable not found\n");
@@ -107,9 +107,9 @@ namespace SimView
         glBindBuffer(GL_ARRAY_BUFFER, array.id);
         glEnableVertexAttribArray(loc);
         glVertexAttribPointer(loc, array.elemSize, GL_FLOAT, GL_FALSE, 0, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, NULL);
         glVertexAttribDivisor(loc, 1);
         instanceCount = array.count;
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void ShaderProgram::BindTexture(Texture& texture)
@@ -123,6 +123,14 @@ namespace SimView
             throw std::runtime_error("Shader Error: Shader variable not found\n");
         GLint loc = varLocs[name];
         glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
+    }
+
+    void ShaderProgram::BindMat4x4(glm::mat4x4& matrix, std::string name)
+    {
+        if (!varLocs.contains(name))
+            throw std::runtime_error("Shader Error: Shader variable not found\n");
+        GLint loc = varLocs[name];
+        glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
     }
 
     void ShaderProgram::RenderTri(int index)

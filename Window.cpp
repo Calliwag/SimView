@@ -3,6 +3,8 @@
 
 namespace SimView
 {
+    Window* callbackWindow = nullptr;
+
     static void close_callback(GLFWwindow* window)
     {
         glfwSetWindowShouldClose(window, 1);
@@ -10,16 +12,40 @@ namespace SimView
 
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     {
+        if (!callbackWindow)
+            return;
         glViewport(0, 0, width, height);
+        callbackWindow->width = width;
+        callbackWindow->height = height;
     }
+
+    static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+    {
+        if (!callbackWindow)
+            return;
+        if (action == GLFW_PRESS)
+        {
+            callbackWindow->keyDown[scancode] = true;
+        }
+        if (action == GLFW_RELEASE)
+        {
+            callbackWindow->keyDown[scancode] = false;
+        }
+    }
+
+
 
     Window::Window(int width, int height, std::string title)
     {
         int err;
 
+        this->width = width;
+        this->height = height;
+
         windowPtr = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
         glfwSetWindowCloseCallback(windowPtr, close_callback);
         glfwSetFramebufferSizeCallback(windowPtr, framebuffer_size_callback);
+        glfwSetKeyCallback(windowPtr, key_callback);
 
         if (!windowPtr)
         {
@@ -32,9 +58,6 @@ namespace SimView
         if (version == 0) {
             throw std::runtime_error("Window Error: Failed to initialize OpenGL context\n");
         }
-        glfwMakeContextCurrent(NULL);
-
-        BeginContext();
 
         glfwSwapInterval(0);
 
@@ -44,6 +67,7 @@ namespace SimView
         glEnable(GL_BLEND);
 
         BeginFrame();
+        PollEvents();
         EndFrame();
 
         EndContext();
@@ -62,11 +86,13 @@ namespace SimView
     void Window::BeginContext()
     {
         glfwMakeContextCurrent(windowPtr);
+        callbackWindow = this;
     }
 
     void Window::EndContext()
     {
         glfwMakeContextCurrent(NULL);
+        callbackWindow = nullptr;
     }
 
     void Window::BeginFrame()
@@ -74,8 +100,6 @@ namespace SimView
         frameTime = frameStartTime;
         frameStartTime = glfwGetTime();
         frameTime = frameStartTime - frameTime;
-        glfwGetFramebufferSize(windowPtr, &width, &height);
-        glViewport(0, 0, width, height);
         viewMatrix = GetViewMatrix();
     }
 
@@ -87,6 +111,7 @@ namespace SimView
     void Window::PollEvents()
     {
         glfwPollEvents();
+        lastKeyDown = keyDown;
     }
 
     void Window::Destroy()
@@ -102,6 +127,18 @@ namespace SimView
     void Window::SetPointSize(int size)
     {
         glPointSize(size);
+    }
+
+    bool Window::IsKeyPressed(int glfwKey)
+    {
+        int key = glfwGetKeyScancode(glfwKey);
+        return keyDown[key] && !lastKeyDown[key];
+    }
+
+    bool Window::IsKeyDown(int glfwKey)
+    {
+        int key = glfwGetKeyScancode(glfwKey);
+        return keyDown[key];
     }
 
     glm::mat3x3 Window::GetViewMatrix()

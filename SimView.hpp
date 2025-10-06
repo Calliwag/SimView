@@ -2,6 +2,8 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#define GLM_FORCE_SSE2
+#define GLM_FORCE_INLINE
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
@@ -32,6 +34,7 @@ namespace SimView
 		static Color Green(float alpha) { return { 0,255,  0,unsigned char(alpha * 255) }; };
 		static Color Blue(float alpha) { return { 0,  0,255,unsigned char(alpha * 255) }; };
 	};
+
 	class FColor
 	{
 	public:
@@ -72,8 +75,6 @@ namespace SimView
 	{
 	public:
 		GLuint id;
-		int width;
-		int height;
 
 		Texture();;
 		Texture(int width, int height, Color* data);
@@ -81,7 +82,7 @@ namespace SimView
 		static Texture FromBitmap(Bitmap& image);
 	};
 
-	class vArray
+	class VArray
 	{
 	public:
 		GLuint id;
@@ -89,19 +90,14 @@ namespace SimView
 		int elemSize;
 		bool hasArray;
 
-		vArray();
-		vArray(GLuint id, int count, int elemSize);
-		vArray(vArray& other);
-		~vArray();
+		VArray();
+		VArray(int elemCount, int elemSize, void* data);
+		VArray(VArray& other);
+		VArray& operator=(VArray&& other);
+		~VArray();
 
-		static vArray Init(int size, float values[]);
-		static vArray Init(int size, glm::vec2 points[]);
-		static vArray Init(int size, Color colors[]);
-		static vArray Init(int size, FColor colors[]);
-		void Set(int index, int size, float values[]);
-		void Set(int index, int size, glm::vec2 points[]);
-		void Set(int index, int size, Color colors[]);
-		void Set(int index, int size, FColor colors[]);
+		void Set(int index, int elemCount, void* data);
+		void Destroy();
 	};
 
 	class ShaderProgram
@@ -119,11 +115,12 @@ namespace SimView
 
 		// Binding functions
 
-		void BindArray(vArray& array, std::string name);
+		void BindArray(VArray& array, std::string name);
 		void BindColor(Color& color, std::string name);
-		void BindInstanceArray(vArray& array, std::string name);
+		void BindInstanceArray(VArray& array, std::string name);
 		void BindTexture(Texture& texture);
 		void BindMat3x3(glm::mat3x3& matrix, std::string name);
+		void BindMat4x4(glm::mat4x4& matrix, std::string name);
 
 
 		// Rendering functions
@@ -158,6 +155,8 @@ namespace SimView
 		double frameStartTime;
 		double frameTime;
 		glm::mat3x3 viewMatrix;
+		std::map<int, bool> keyDown;
+		std::map<int, bool> lastKeyDown;
 
 		Window(int width, int height, std::string title);
 	public:
@@ -178,11 +177,18 @@ namespace SimView
 
 		glm::mat3x3 GetViewMatrix();
 
+
 		// Settings functions
 
 		void SetBlendMode(BlendMode mode);
 		void SetLineWidth(int width);
 		void SetPointSize(int size);
+
+
+		// Input functions
+
+		bool IsKeyPressed(int glfwKey);
+		bool IsKeyDown(int glfwKey);
 
 
 		// Misc. functions
