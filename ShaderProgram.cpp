@@ -117,6 +117,14 @@ namespace SimView
         glBindTexture(GL_TEXTURE_2D, texture.id);
     }
 
+    void ShaderProgram::BindMat2x2(glm::mat2x2& matrix, std::string name)
+    {
+        if (!varLocs.contains(name))
+            throw std::runtime_error("Shader Error: Shader variable not found\n");
+        GLint loc = varLocs[name];
+        glUniformMatrix2fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
+    }
+
     void ShaderProgram::BindMat3x3(glm::mat3x3& matrix, std::string name)
     {
         if (!varLocs.contains(name))

@@ -119,6 +119,7 @@ namespace SimView
 		void BindColor(Color& color, std::string name);
 		void BindInstanceArray(VArray& array, std::string name);
 		void BindTexture(Texture& texture);
+		void BindMat2x2(glm::mat2x2& matrix, std::string name);
 		void BindMat3x3(glm::mat3x3& matrix, std::string name);
 		void BindMat4x4(glm::mat4x4& matrix, std::string name);
 
@@ -137,6 +138,7 @@ namespace SimView
 	{
 		Default,
 		Alpha,
+		PreMultAlpha,
 		Add,
 	};
 
