@@ -12,7 +12,7 @@ namespace SimView
         GLuint id;
         glGenBuffers(1, &id);
         glBindBuffer(GL_ARRAY_BUFFER, id);
-        glBufferData(GL_ARRAY_BUFFER, elemCount * elemSize * sizeof(float), data, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, elemCount * elemSize * sizeof(float), data, GL_DYNAMIC_DRAW);
         this->id = id;
         this->count = elemCount;
         this->elemSize = elemSize;

@@ -100,6 +100,23 @@ namespace SimView
 		void Destroy();
 	};
 
+	class IArray
+	{
+	public:
+		GLuint id;
+		int count;
+		bool hasArray;
+
+		IArray();
+		IArray(int elemCount, int* data);
+		IArray(IArray& other);
+		IArray& operator=(IArray&& other);
+		~IArray();
+
+		void Set(int index, int elemCount, int* data);
+		void Destroy();
+	};
+
 	class ShaderProgram
 	{
 	public:
@@ -107,7 +124,9 @@ namespace SimView
 		std::map<std::string, GLint> varLocs;
 		bool instanced;
 		int instanceCount;
+		bool hasIndexArray;
 
+		ShaderProgram();
 		ShaderProgram(const char* vertexSource, const char* fragmentSource, bool instanced, std::vector<std::string> uniforms, std::vector<std::string> attribs);
 		void BindProgram();
 		void Draw(GLenum drawCall, GLint index, GLsizei count);
@@ -116,17 +135,23 @@ namespace SimView
 		// Binding functions
 
 		void BindArray(VArray& array, std::string name);
-		void BindColor(Color& color, std::string name);
 		void BindInstanceArray(VArray& array, std::string name);
 		void BindTexture(Texture& texture);
-		void BindMat2x2(glm::mat2x2& matrix, std::string name);
-		void BindMat3x3(glm::mat3x3& matrix, std::string name);
-		void BindMat4x4(glm::mat4x4& matrix, std::string name);
+		void BindIndexArray(IArray& array);
+		void UnbindIndexArray();
+
+		void BindColor(Color color, std::string name);
+		void BindMat2x2(glm::mat2x2 matrix, std::string name);
+		void BindMat3x3(glm::mat3x3 matrix, std::string name);
+		void BindMat4x4(glm::mat4x4 matrix, std::string name);
+		void BindVec2(glm::vec2 vector, std::string name);
+		void BindVec3(glm::vec3 vector, std::string name);
 
 
 		// Rendering functions
 
 		void RenderTri(int index = 0);
+		void RenderTris(int count, int index = 0);
 		void RenderQuad(int index = 0);
 		void RenderLine(int index = 0);
 		void RenderLines(int count, int index = 0);
