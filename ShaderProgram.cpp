@@ -100,22 +100,23 @@ namespace SimView
         }
     }
 
-    void ShaderProgram::BindArray(VArray& array, std::string name)
+    GLint ShaderProgram::GetVarLoc(std::string name)
     {
         if (!varLocs.contains(name))
             throw std::runtime_error("Shader Error: Shader variable not found\n");
-        GLint loc = varLocs[name];
+        return varLocs[name];
+    }
+
+    void ShaderProgram::BindArray(VArray& array, GLint loc)
+    {
         glBindBuffer(GL_ARRAY_BUFFER, array.id);
         glEnableVertexAttribArray(loc);
         glVertexAttribPointer(loc, array.elemSize, GL_FLOAT, GL_FALSE, 0, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    void ShaderProgram::BindInstanceArray(VArray& array, std::string name)
+    void ShaderProgram::BindInstanceArray(VArray& array, GLint loc)
     {
-        if (!varLocs.contains(name))
-            throw std::runtime_error("Shader Error: Shader variable not found\n");
-        GLint loc = varLocs[name];
         glBindBuffer(GL_ARRAY_BUFFER, array.id);
         glEnableVertexAttribArray(loc);
         glVertexAttribPointer(loc, array.elemSize, GL_FLOAT, GL_FALSE, 0, 0);
@@ -141,51 +142,33 @@ namespace SimView
         hasIndexArray = false;
     }
 
-    void ShaderProgram::BindColor(Color color, std::string name)
+    void ShaderProgram::BindColor(Color color, GLint loc)
     {
-        if (!varLocs.contains(name))
-            throw std::runtime_error("Shader Error: Shader variable not found\n");
-        GLint loc = varLocs[name];
         glUniform4f(loc, color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
     }
 
-    void ShaderProgram::BindMat2x2(glm::mat2x2 matrix, std::string name)
+    void ShaderProgram::BindMat2x2(glm::mat2x2 matrix, GLint loc)
     {
-        if (!varLocs.contains(name))
-            throw std::runtime_error("Shader Error: Shader variable not found\n");
-        GLint loc = varLocs[name];
         glUniformMatrix2fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
     }
 
-    void ShaderProgram::BindMat3x3(glm::mat3x3 matrix, std::string name)
+    void ShaderProgram::BindMat3x3(glm::mat3x3 matrix, GLint loc)
     {
-        if (!varLocs.contains(name))
-            throw std::runtime_error("Shader Error: Shader variable not found\n");
-        GLint loc = varLocs[name];
         glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
     }
 
-    void ShaderProgram::BindMat4x4(glm::mat4x4 matrix, std::string name)
+    void ShaderProgram::BindMat4x4(glm::mat4x4 matrix, GLint loc)
     {
-        if (!varLocs.contains(name))
-            throw std::runtime_error("Shader Error: Shader variable not found\n");
-        GLint loc = varLocs[name];
         glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
     }
 
-    void ShaderProgram::BindVec2(glm::vec2 vector, std::string name)
+    void ShaderProgram::BindVec2(glm::vec2 vector, GLint loc)
     {
-        if (!varLocs.contains(name))
-            throw std::runtime_error("Shader Error: Shader variable not found\n");
-        GLint loc = varLocs[name];
         glUniform2f(loc, vector.x, vector.y);
     }
 
-    void ShaderProgram::BindVec3(glm::vec3 vector, std::string name)
+    void ShaderProgram::BindVec3(glm::vec3 vector, GLint loc)
     {
-        if (!varLocs.contains(name))
-            throw std::runtime_error("Shader Error: Shader variable not found\n");
-        GLint loc = varLocs[name];
         glUniform3f(loc, vector.x, vector.y, vector.z);
     }
 

@@ -134,18 +134,20 @@ namespace SimView
 
 		// Binding functions
 
-		void BindArray(VArray& array, std::string name);
-		void BindInstanceArray(VArray& array, std::string name);
+		GLint GetVarLoc(std::string name);
+
+		void BindArray(VArray& array, GLint loc);
+		void BindInstanceArray(VArray& array, GLint loc);
 		void BindTexture(Texture& texture);
 		void BindIndexArray(IArray& array);
 		void UnbindIndexArray();
 
-		void BindColor(Color color, std::string name);
-		void BindMat2x2(glm::mat2x2 matrix, std::string name);
-		void BindMat3x3(glm::mat3x3 matrix, std::string name);
-		void BindMat4x4(glm::mat4x4 matrix, std::string name);
-		void BindVec2(glm::vec2 vector, std::string name);
-		void BindVec3(glm::vec3 vector, std::string name);
+		void BindColor(Color color, GLint loc);
+		void BindMat2x2(glm::mat2x2 matrix, GLint loc);
+		void BindMat3x3(glm::mat3x3 matrix, GLint loc);
+		void BindMat4x4(glm::mat4x4 matrix, GLint loc);
+		void BindVec2(glm::vec2 vector, GLint loc);
+		void BindVec3(glm::vec3 vector, GLint loc);
 
 
 		// Rendering functions

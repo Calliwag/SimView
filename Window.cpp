@@ -110,8 +110,8 @@ namespace SimView
 
     void Window::PollEvents()
     {
-        glfwPollEvents();
         lastKeyDown = keyDown;
+        glfwPollEvents();  
     }
 
     void Window::Destroy()
