@@ -2,12 +2,12 @@
 
 namespace SimView
 {
-	IArray::IArray()
+	IndexArray::IndexArray()
 	{
 		this->hasArray = false;
 	}
 
-	IArray::IArray(int elemCount, int* data)
+	IndexArray::IndexArray(int elemCount, int* data)
 	{
 		GLuint id;
 		glGenBuffers(1, &id);
@@ -19,7 +19,7 @@ namespace SimView
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
-	IArray::IArray(IArray& other)
+	IndexArray::IndexArray(IndexArray& other)
 	{
 		if (this->hasArray)
 		{
@@ -31,7 +31,7 @@ namespace SimView
 		other.hasArray = false;
 	}
 
-	IArray& IArray::operator=(IArray&& other)
+	IndexArray& IndexArray::operator=(IndexArray&& other)
 	{
 		if (this != &other)
 		{
@@ -47,7 +47,7 @@ namespace SimView
 		return *this;
 	}
 
-	IArray::~IArray()
+	IndexArray::~IndexArray()
 	{
 		if (hasArray)
 		{
@@ -55,14 +55,14 @@ namespace SimView
 		}
 	}
 
-	void IArray::Set(int index, int elemCount, int* data)
+	void IndexArray::Set(int index, int elemCount, int* data)
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, index * sizeof(int), elemCount * sizeof(int), data);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
-	void IArray::Destroy()
+	void IndexArray::Destroy()
 	{
 		if (hasArray)
 		{

@@ -107,7 +107,7 @@ namespace SimView
         return varLocs[name];
     }
 
-    void ShaderProgram::BindArray(VArray& array, GLint loc)
+    void ShaderProgram::BindArray(VArray<float>& array, GLint loc)
     {
         glBindBuffer(GL_ARRAY_BUFFER, array.id);
         glEnableVertexAttribArray(loc);
@@ -115,14 +115,24 @@ namespace SimView
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    void ShaderProgram::BindInstanceArray(VArray& array, GLint loc)
+    void ShaderProgram::BindArray(VArray<int>& array, GLint loc)
     {
         glBindBuffer(GL_ARRAY_BUFFER, array.id);
         glEnableVertexAttribArray(loc);
-        glVertexAttribPointer(loc, array.elemSize, GL_FLOAT, GL_FALSE, 0, 0);
-        glVertexAttribDivisor(loc, 1);
-        instanceCount = array.count;
+        //glVertexAttribIPointer(loc, array.elemSize, GL_INT, GL_FALSE, 0, 0);
+        glVertexAttribIPointer(loc, array.elemSize, GL_INT, 0, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    void ShaderProgram::SetInstanceCount(int count)
+    {
+        instanced = true;
+        instanceCount = count;
+    }
+
+    void ShaderProgram::SetArrayDivisor(int divisor, GLint loc)
+    {
+        glVertexAttribDivisor(loc, divisor);
     }
 
     void ShaderProgram::BindTexture(Texture& texture)
@@ -130,7 +140,7 @@ namespace SimView
         glBindTexture(GL_TEXTURE_2D, texture.id);
     }
 
-    void ShaderProgram::BindIndexArray(IArray& array)
+    void ShaderProgram::BindIndexArray(IndexArray& array)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, array.id);
         hasIndexArray = true;

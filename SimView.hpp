@@ -13,6 +13,13 @@
 
 namespace SimView
 {
+	typedef std::uint8_t u8;
+	typedef std::uint8_t u16;
+	typedef std::uint8_t u32;
+	typedef std::int8_t i8;
+	typedef std::int8_t i16;
+	typedef std::int8_t i32;
+
 	class Core
 	{
 	public:
@@ -82,6 +89,7 @@ namespace SimView
 		static Texture FromBitmap(Bitmap& image);
 	};
 
+	template <typename T>
 	class VArray
 	{
 	public:
@@ -90,28 +98,86 @@ namespace SimView
 		int elemSize;
 		bool hasArray;
 
-		VArray();
-		VArray(int elemCount, int elemSize, void* data);
-		VArray(VArray& other);
-		VArray& operator=(VArray&& other);
-		~VArray();
+		VArray()
+		{
+			this->hasArray = false;
+		}
+		VArray(int elemCount, int elemSize, T* data)
+		{
+			GLuint id;
+			glGenBuffers(1, &id);
+			glBindBuffer(GL_ARRAY_BUFFER, id);
+			glBufferData(GL_ARRAY_BUFFER, elemCount* elemSize * sizeof(T), data, GL_DYNAMIC_DRAW);
+			this->id = id;
+			this->count = elemCount;
+			this->elemSize = elemSize;
+			this->hasArray = true;
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		}
+		VArray(const VArray& other)
+		{
+			if (this->hasArray)
+			{
+				glDeleteBuffers(1, &id);
+			}
+			this->id = other.id;
+			this->count = other.count;
+			this->elemSize = other.elemSize;
+			this->hasArray = other.hasArray;
+			//other.hasArray = false;
+		}
+		VArray& operator=(VArray&& other)
+		{
+			if (this != &other)
+			{
+				if (this->hasArray)
+				{
+					glDeleteBuffers(1, &id);
+				}
+				this->id = other.id;
+				this->count = other.count;
+				this->elemSize = other.elemSize;
+				this->hasArray = other.hasArray;
+				other.hasArray = false;
+			}
+			return *this;
+		}
+		~VArray()
+		{
+			if (hasArray)
+			{
+				glDeleteBuffers(1, &id);
+			}
+		}
 
-		void Set(int index, int elemCount, void* data);
-		void Destroy();
+		void Set(int index, int elemCount, T* data)
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, id);
+			glBufferSubData(GL_ARRAY_BUFFER, index * elemSize * sizeof(T), elemCount * elemSize * sizeof(T), data);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		}
+		void Destroy()
+		{
+			if (hasArray)
+			{
+				glDeleteBuffers(1, &id);
+			}
+			hasArray = false;
+		}
 	};
 
-	class IArray
+	class IndexArray
 	{
 	public:
 		GLuint id;
 		int count;
 		bool hasArray;
 
-		IArray();
-		IArray(int elemCount, int* data);
-		IArray(IArray& other);
-		IArray& operator=(IArray&& other);
-		~IArray();
+		IndexArray();
+		IndexArray(int elemCount, int* data);
+		IndexArray(IndexArray& other);
+		IndexArray& operator=(IndexArray&& other);
+		~IndexArray();
 
 		void Set(int index, int elemCount, int* data);
 		void Destroy();
@@ -136,11 +202,14 @@ namespace SimView
 
 		GLint GetVarLoc(std::string name);
 
-		void BindArray(VArray& array, GLint loc);
-		void BindInstanceArray(VArray& array, GLint loc);
+		void BindArray(VArray<float>& array, GLint loc);
+		void BindArray(VArray<int>& array, GLint loc);
 		void BindTexture(Texture& texture);
-		void BindIndexArray(IArray& array);
+		void BindIndexArray(IndexArray& array);
 		void UnbindIndexArray();
+
+		void SetInstanceCount(int count);
+		void SetArrayDivisor(int divisor, GLint loc);
 
 		void BindColor(Color color, GLint loc);
 		void BindMat2x2(glm::mat2x2 matrix, GLint loc);
