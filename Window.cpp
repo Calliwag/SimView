@@ -33,7 +33,14 @@ namespace SimView
         }
     }
 
-
+    static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+    {
+        if (!callbackWindow)
+            return;
+        glm::vec2 newPos = { xpos,ypos };
+        callbackWindow->mouseDelta = newPos - callbackWindow->mousePos;
+        callbackWindow->mousePos = newPos;
+    }
 
     Window::Window(int width, int height, std::string title)
     {
@@ -46,6 +53,7 @@ namespace SimView
         glfwSetWindowCloseCallback(windowPtr, close_callback);
         glfwSetFramebufferSizeCallback(windowPtr, framebuffer_size_callback);
         glfwSetKeyCallback(windowPtr, key_callback);
+        glfwSetCursorPosCallback(windowPtr, cursor_position_callback);
 
         if (!windowPtr)
         {
@@ -100,7 +108,6 @@ namespace SimView
         frameTime = frameStartTime;
         frameStartTime = glfwGetTime();
         frameTime = frameStartTime - frameTime;
-        viewMatrix = GetViewMatrix();
     }
 
     void Window::EndFrame()
@@ -141,19 +148,14 @@ namespace SimView
         return keyDown[key];
     }
 
-    glm::mat3x3 Window::GetViewMatrix()
+    void Window::LockMouse()
     {
-        glm::mat3x3 matrix;
-        matrix[0][0] = 2.f / width;
-        matrix[1][0] = 0;
-        matrix[2][0] = -1;
-        matrix[0][1] = 0;
-        matrix[1][1] = 2.f / height;
-        matrix[2][1] = -1;
-        matrix[0][2] = 0;
-        matrix[1][2] = 0;
-        matrix[2][2] = 1;
-        return matrix;
+        glfwSetInputMode(windowPtr, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+
+    void Window::UnlockMouse()
+    {
+        glfwSetInputMode(windowPtr, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 
     void Window::SetBlendMode(BlendMode mode)

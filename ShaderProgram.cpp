@@ -4,6 +4,10 @@ namespace SimView
 {
     ShaderProgram::ShaderProgram()
     {
+        hasIndexArray = false;
+        id = -1;
+        instanced = false;
+        instanceCount = 0;
     }
 
     ShaderProgram::ShaderProgram(const char* vertexSource, const char* fragmentSource, bool instanced, std::vector<std::string> uniforms, std::vector<std::string> attribs)
@@ -135,7 +139,7 @@ namespace SimView
         glVertexAttribDivisor(loc, divisor);
     }
 
-    void ShaderProgram::BindTexture(Texture& texture)
+    void ShaderProgram::BindTexture(const Texture& texture)
     {
         glBindTexture(GL_TEXTURE_2D, texture.id);
     }

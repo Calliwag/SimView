@@ -70,11 +70,13 @@ namespace SimView
 		int height;
 
 		Bitmap(int width, int height, Color* data);
-		int GetIndex(int x, int y);
+		int GetIndex(int x, int y) const;
 
 		static Bitmap GetColorImage(int width, int height, Color color);
-		Color GetPixel(int x, int y);
+		static Bitmap FromFile(std::string path);
+		Color GetPixel(int x, int y) const; 
 		void SetPixel(int x, int y, Color color);
+		void DrawBitmap(int oX, int oY, const Bitmap& img);
 		~Bitmap();
 	};
 
@@ -83,8 +85,9 @@ namespace SimView
 	public:
 		GLuint id;
 
-		Texture();;
+		Texture();
 		Texture(int width, int height, Color* data);
+		void GenMipmaps(int maxLod, float bias);
 
 		static Texture FromBitmap(Bitmap& image);
 	};
@@ -104,29 +107,88 @@ namespace SimView
 		}
 		VArray(int elemCount, int elemSize, T* data)
 		{
-			GLuint id;
 			glGenBuffers(1, &id);
 			glBindBuffer(GL_ARRAY_BUFFER, id);
 			glBufferData(GL_ARRAY_BUFFER, elemCount* elemSize * sizeof(T), data, GL_DYNAMIC_DRAW);
-			this->id = id;
 			this->count = elemCount;
 			this->elemSize = elemSize;
 			this->hasArray = true;
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
+		// Copy constructor
 		VArray(const VArray& other)
 		{
+			if (!other.hasArray)
+			{
+				this->id = 0;
+				this->count = 0;
+				this->elemSize = 0;
+				this->hasArray = false;
+				return;
+			}
+
+			glGenBuffers(1, &id);
+			this->count = other.count;
+			this->elemSize = other.elemSize;
+			this->hasArray = true;
+
+			glBindBuffer(GL_COPY_READ_BUFFER, other.id);
+			glBindBuffer(GL_COPY_WRITE_BUFFER, id);
+			glBufferData(GL_COPY_WRITE_BUFFER, count * elemSize * sizeof(T), nullptr, GL_DYNAMIC_DRAW);
+			glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, count * elemSize * sizeof(T));
+			glBindBuffer(GL_COPY_READ_BUFFER, 0);
+			glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+		}
+
+		// Copy assignment
+		VArray& operator=(const VArray& other)
+		{
+			if (this == &other)
+				return *this;
+
 			if (this->hasArray)
 			{
 				glDeleteBuffers(1, &id);
 			}
+
+			if (!other.hasArray)
+			{
+				this->id = 0;
+				this->count = 0;
+				this->elemSize = 0;
+				this->hasArray = false;
+				return *this;
+			}
+
+			glGenBuffers(1, &id);
+			this->count = other.count;
+			this->elemSize = other.elemSize;
+			this->hasArray = true;
+
+			glBindBuffer(GL_COPY_READ_BUFFER, other.id);
+			glBindBuffer(GL_COPY_WRITE_BUFFER, id);
+			glBufferData(GL_COPY_WRITE_BUFFER, count * elemSize * sizeof(T), nullptr, GL_DYNAMIC_DRAW);
+			glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, count * elemSize * sizeof(T));
+			glBindBuffer(GL_COPY_READ_BUFFER, 0);
+			glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+
+			return *this;
+		}
+
+		// Move constructor
+		VArray(VArray&& other) noexcept
+		{
 			this->id = other.id;
 			this->count = other.count;
 			this->elemSize = other.elemSize;
 			this->hasArray = other.hasArray;
-			//other.hasArray = false;
+
+			other.hasArray = false;
+			other.id = 0;
 		}
-		VArray& operator=(VArray&& other)
+
+		// Move assignment
+		VArray& operator=(VArray&& other) noexcept
 		{
 			if (this != &other)
 			{
@@ -134,11 +196,14 @@ namespace SimView
 				{
 					glDeleteBuffers(1, &id);
 				}
+
 				this->id = other.id;
 				this->count = other.count;
 				this->elemSize = other.elemSize;
 				this->hasArray = other.hasArray;
+
 				other.hasArray = false;
+				other.id = 0;
 			}
 			return *this;
 		}
@@ -204,7 +269,7 @@ namespace SimView
 
 		void BindArray(VArray<float>& array, GLint loc);
 		void BindArray(VArray<int>& array, GLint loc);
-		void BindTexture(Texture& texture);
+		void BindTexture(const Texture& texture);
 		void BindIndexArray(IndexArray& array);
 		void UnbindIndexArray();
 
@@ -252,9 +317,12 @@ namespace SimView
 		int height;
 		double frameStartTime;
 		double frameTime;
-		glm::mat3x3 viewMatrix;
+
+		// Inputs
 		std::map<int, bool> keyDown;
 		std::map<int, bool> lastKeyDown;
+		glm::vec2 mousePos;
+		glm::vec2 mouseDelta;
 
 		Window(int width, int height, std::string title);
 	public:
@@ -271,11 +339,6 @@ namespace SimView
 		void Destroy();
 
 
-		// Helper functions
-
-		glm::mat3x3 GetViewMatrix();
-
-
 		// Settings functions
 
 		void SetBlendMode(BlendMode mode);
@@ -287,6 +350,8 @@ namespace SimView
 
 		bool IsKeyPressed(int glfwKey);
 		bool IsKeyDown(int glfwKey);
+		void LockMouse();
+		void UnlockMouse();
 
 
 		// Misc. functions
