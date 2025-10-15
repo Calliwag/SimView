@@ -144,6 +144,11 @@ namespace SimView
         glBindTexture(GL_TEXTURE_2D, texture.id);
     }
 
+    void ShaderProgram::BindTextureArray(const TextureArray& textureArray)
+    {
+        glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray.id);
+    }
+
     void ShaderProgram::BindIndexArray(IndexArray& array)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, array.id);

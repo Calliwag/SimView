@@ -92,6 +92,17 @@ namespace SimView
 		static Texture FromBitmap(Bitmap& image);
 	};
 
+	class TextureArray
+	{
+	public:
+		GLuint id;
+
+		TextureArray();
+		TextureArray(int width, int height, int layers, int mipLevel);
+		void LayerFromBitmap(Bitmap& image, int layer);
+		void GenMipmaps(float bias);
+	};
+
 	template <typename T>
 	class VArray
 	{
@@ -270,6 +281,7 @@ namespace SimView
 		void BindArray(VArray<float>& array, GLint loc);
 		void BindArray(VArray<int>& array, GLint loc);
 		void BindTexture(const Texture& texture);
+		void BindTextureArray(const TextureArray& textureArray);
 		void BindIndexArray(IndexArray& array);
 		void UnbindIndexArray();
 
