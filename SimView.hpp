@@ -333,8 +333,11 @@ namespace SimView
 		// Inputs
 		std::map<int, bool> keyDown;
 		std::map<int, bool> lastKeyDown;
+		std::map<int, bool> mButtonDown;
+		std::map<int, bool> lastMButtonDown;
 		glm::vec2 mousePos;
 		glm::vec2 mouseDelta;
+		glm::vec2 scrollDelta;
 
 		Window(int width, int height, std::string title);
 	public:
@@ -362,6 +365,9 @@ namespace SimView
 
 		bool IsKeyPressed(int glfwKey);
 		bool IsKeyDown(int glfwKey);
+		bool IsMouseButtonPressed(int glfwMouseButton);
+		bool IsMouseButtonDown(int glfwMouseButton);
+		glm::vec2 GetScrollDelta();
 		void LockMouse();
 		void UnlockMouse();
 

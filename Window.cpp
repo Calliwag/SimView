@@ -42,6 +42,27 @@ namespace SimView
         callbackWindow->mousePos = newPos;
     }
 
+    void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+    {
+        if (!callbackWindow)
+            return;
+        if (action == GLFW_PRESS)
+        {
+            callbackWindow->mButtonDown[button] = true;
+        }
+        if (action == GLFW_RELEASE)
+        {
+            callbackWindow->mButtonDown[button] = false;
+        }
+    }
+
+    void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+    {
+        if (!callbackWindow)
+            return;
+        callbackWindow->scrollDelta = { xoffset,yoffset };
+    }
+
     Window::Window(int width, int height, std::string title)
     {
         int err;
@@ -54,6 +75,8 @@ namespace SimView
         glfwSetFramebufferSizeCallback(windowPtr, framebuffer_size_callback);
         glfwSetKeyCallback(windowPtr, key_callback);
         glfwSetCursorPosCallback(windowPtr, cursor_position_callback);
+        glfwSetMouseButtonCallback(windowPtr, mouse_button_callback);
+        glfwSetScrollCallback(windowPtr, scroll_callback);
 
         if (!windowPtr)
         {
@@ -118,6 +141,9 @@ namespace SimView
     void Window::PollEvents()
     {
         lastKeyDown = keyDown;
+        lastMButtonDown = mButtonDown;
+        mouseDelta = { 0,0 };
+        scrollDelta = { 0,0 };
         glfwPollEvents();  
     }
 
@@ -146,6 +172,21 @@ namespace SimView
     {
         int key = glfwGetKeyScancode(glfwKey);
         return keyDown[key];
+    }
+
+    bool Window::IsMouseButtonPressed(int glfwMouseButton)
+    {
+        return mButtonDown[glfwMouseButton] && !lastMButtonDown[glfwMouseButton];
+    }
+
+    bool Window::IsMouseButtonDown(int glfwMouseButton)
+    {
+        return mButtonDown[glfwMouseButton];
+    }
+
+    glm::vec2 Window::GetScrollDelta()
+    {
+        return scrollDelta;
     }
 
     void Window::LockMouse()
