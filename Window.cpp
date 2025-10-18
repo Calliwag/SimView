@@ -10,6 +10,13 @@ namespace SimView
         glfwSetWindowShouldClose(window, 1);
     }
 
+    void GLAPIENTRY debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+    {
+        //printf("OpenGL Error: ");
+        //printf(message);
+        //printf("\n");
+    }
+
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     {
         if (!callbackWindow)
@@ -71,7 +78,16 @@ namespace SimView
         this->height = height;
 
         windowPtr = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
+        glfwMakeContextCurrent(windowPtr);
+        int version = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+        if (version == 0) {
+            throw std::runtime_error("Window Error: Failed to initialize OpenGL context\n");
+        }
+
         glfwSetWindowCloseCallback(windowPtr, close_callback);
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(debug_callback, nullptr);
         glfwSetFramebufferSizeCallback(windowPtr, framebuffer_size_callback);
         glfwSetKeyCallback(windowPtr, key_callback);
         glfwSetCursorPosCallback(windowPtr, cursor_position_callback);
@@ -84,11 +100,10 @@ namespace SimView
             throw std::runtime_error("Window Error: Failed to initialize window\n");;
         }
 
-        glfwMakeContextCurrent(windowPtr);
-        int version = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-        if (version == 0) {
-            throw std::runtime_error("Window Error: Failed to initialize OpenGL context\n");
-        }
+        //int version = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+        //if (version == 0) {
+        //    throw std::runtime_error("Window Error: Failed to initialize OpenGL context\n");
+        //}
 
         glfwSwapInterval(0);
 
