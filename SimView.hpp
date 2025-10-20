@@ -80,18 +80,6 @@ namespace SimView
 		~Bitmap();
 	};
 
-	class Texture
-	{
-	public:
-		GLuint id;
-
-		Texture();
-		Texture(int width, int height, Color* data);
-		void GenMipmaps(int maxLod, float bias);
-
-		static Texture FromBitmap(Bitmap& image);
-	};
-
 	class TextureArray
 	{
 	public:
@@ -101,6 +89,20 @@ namespace SimView
 		TextureArray(int width, int height, int layers, int mipLevel);
 		void LayerFromBitmap(Bitmap& image, int layer);
 		void GenMipmaps(float bias);
+	};
+
+	class Texture
+	{
+	public:
+		GLuint id;
+
+		Texture();
+		Texture(GLuint id) : id(id) {};
+		Texture(int width, int height, Color* data);
+		void GenMipmaps(int maxLod, float bias);
+
+		static Texture FromBitmap(Bitmap& image);
+		static Texture FromTextureArray(TextureArray& texArray, int layer);
 	};
 
 	template <typename T>
