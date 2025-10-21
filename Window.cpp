@@ -12,9 +12,9 @@ namespace SimView
 
     void GLAPIENTRY debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
     {
-        printf("OpenGL Error: ");
-        printf(message);
-        printf("\n");
+        //printf(">>>OpenGL: ");
+        //printf(message);
+        //printf("\n");
     }
 
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
